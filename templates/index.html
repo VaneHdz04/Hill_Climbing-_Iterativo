@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Ruta Óptima</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://unpkg.com/cytoscape@3.19.1/dist/cytoscape.min.js"></script>
+
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Rubik', sans-serif;
+            background-image: url('https://www.allplan.com/fileadmin/_processed_/8/8/csm_iStock-1283596106_NEU_2d7a593dea.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        h1{
+            color: #ffffff;
+            size: 22px;
+
+        }
+
+        .contenedor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .formulario {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            color: white;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .formulario h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 95%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background-color: #00c9a7;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        
+        .boton-accion {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 16px;
+            margin: 5px 5px 0 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .boton-amarillo {
+            background-color: #ffd93b;
+            color: black;
+        }
+
+        .boton-rojo {
+            background-color: #ff5c5c;
+        }
+
+        .boton-verde {
+            background-color: #4CAF50;
+        }
+
+
+        .tarjetas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 40px;
+            justify-content: center;
+        }
+
+
+        .tarjeta {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .tarjeta button {
+            margin-top: 10px;
+            width: 48%;
+           
+        }
+
+        .tarjeta button.edit {
+            background-color: #ffd93b;
+            color: black;
+        }
+
+        .tarjeta input {
+            width: 90%;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .tarjeta .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .tarjeta .icon-btn:hover {
+            color: #ccc;
+        }
+
+        .icon-btn[title] {
+            position: relative;
+        }
+        .tarjeta .contenido {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .tarjeta .acciones {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+
+        .ruta-resultados {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            width: 80%;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .ruta-bloques {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .bloque {
+            padding: 10px 15px;
+            border-radius: 8px;
+            background-color: #ff9800;
+            color: white;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .bloque:last-child {
+            background-color: #ff9800;
+        }
+
+        .botones-acciones {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Hill Climbing Iterativo</h1>
+        <div class="formulario">
+            <h2>Agregar Ciudad</h2>
+            <input type="text" id="nombre" placeholder="Nombre de la ciudad">
+            <input type="text" id="coordenadas" placeholder="Coordenadas (latitud, longitud)">
+            <button onclick="agregarCiudad()">Agregar</button>
+        </div>
+
+        <div class="tarjetas" id="tarjetas"></div>
+
+        <button style="margin-top: 30px; width: 200px;" onclick="calcularRuta()">Calcular Ruta</button>
+
+        <div class="ruta-resultados" id="rutaResultado" style="display:none;">
+            <h2>Ruta Óptima</h2>
+            <div class="ruta-bloques" id="rutaBloques"></div>
+            <p id="distanciaTotal"></p>
+        </div>
+
+        
+        <div id="cy" style="display: none; width: 800px; height: 600px; background-color: white; margin-top: 20px;"></div>
+
+
+    </div>
+
+    <script>
+        let ciudades = [];
+
+        function agregarCiudad() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const coordStr = document.getElementById('coordenadas').value.trim();
+            const [lat, lon] = coordStr.split(',').map(parseFloat);
+
+            if (!nombre || isNaN(lat) || isNaN(lon)) {
+                alert("Ingresa datos válidos.");
+                return;
+            }
+
+            ciudades.push({ nombre, lat, lon });
+            mostrarTarjetas();
+            document.getElementById('nombre').value = '';
+            document.getElementById('coordenadas').value = '';
+        }
+
+        function mostrarTarjetas() {
+            const contenedor = document.getElementById('tarjetas');
+            contenedor.innerHTML = '';
+            ciudades.forEach((ciudad, index) => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta';
+
+                tarjeta.innerHTML = `
+                    <div class="contenido" id="contenido-${index}">
+                        <h3>${ciudad.nombre}</h3>
+                        <p>Lat: ${ciudad.lat}</p>
+                        <p>Lon: ${ciudad.lon}</p>
+                        <div class="acciones">
+                            <button class="boton-accion boton-amarillo" title="Editar" onclick="activarEdicion(${index})">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="boton-accion boton-rojo" title="Eliminar" onclick="eliminarCiudad(${index})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+
+
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        function eliminarCiudad(index) {
+            ciudades.splice(index, 1);
+            mostrarTarjetas();
+        }
+
+        function activarEdicion(index) {
+            const ciudad = ciudades[index];
+            const tarjeta = document.getElementById(`contenido-${index}`);
+            tarjeta.innerHTML = `
+                <input type="text" id="edit-nombre-${index}" value="${ciudad.nombre}">
+                <input type="text" id="edit-coords-${index}" value="${ciudad.lat}, ${ciudad.lon}">
+                <div class="botones-acciones">
+                    <button class="boton-accion boton-verde" title="Guardar cambios" onclick="guardarEdicion(${index})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="boton-accion boton-rojo" title="Cancelar" onclick="mostrarTarjetas()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+
+        }
+
+        function guardarEdicion(index) {
+            const nuevoNombre = document.getElementById(`edit-nombre-${index}`).value.trim();
+            const coordStr = document.getElementById(`edit-coords-${index}`).value.trim();
+            const [lat, lon] = coordStr.split(',').map(parseFloat);
+
+            if (!nuevoNombre || isNaN(lat) || isNaN(lon)) {
+                alert("Datos inválidos.");
+                return;
+            }
+
+            ciudades[index] = { nombre: nuevoNombre, lat, lon };
+            mostrarTarjetas();
+        }
+
+        function calcularRuta() {
+            fetch('/calcular_ruta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ciudades })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("rutaResultado").style.display = "block";
+                document.getElementById("cy").style.display = "block";
+
+                const rutaBloques = document.getElementById("rutaBloques");
+                rutaBloques.innerHTML = '';
+                data.ruta.forEach((ciudad, idx) => {
+                    const bloque = document.createElement("div");
+                    bloque.className = "bloque";
+                    bloque.innerText = ciudad;
+                    rutaBloques.appendChild(bloque);
+                });
+                document.getElementById("distanciaTotal").innerText = `Distancia Total: ${data.distancia.toFixed(2)} km`;
+
+                // Crear nodos y aristas para Cytoscape
+                const nodes = data.ruta.map((ciudad, idx) => ({
+                    data: { id: ciudad, label: `${idx + 1}. ${ciudad}` }
+                }));
+
+                const edges = [];
+                for (let i = 0; i < data.ruta.length; i++) {
+                    const source = data.ruta[i];
+                    const target = data.ruta[(i + 1) % data.ruta.length]; // Para cerrar el ciclo
+                    edges.push({ data: { id: `${source}-${target}`, source, target } });
+                }
+
+                // Inicializar Cytoscape
+                cy = cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: [...nodes, ...edges],
+                    style: [
+                        {
+                            selector: 'node',
+                            style: {
+                                'width': '100px',
+                                'height': '100px',
+                                'background-color': '#00c9a7',
+                                'color': '#ffffff',
+                                'font-size': '18px',
+                                'text-valign': 'center',
+                                'text-halign': 'center',
+                                'label': 'data(label)',
+                                'text-wrap': 'wrap',
+                                'text-max-width': '90px',
+                                'font-weight': 'bold',
+                                'border-width': 4,
+                                'border-color': '#ffffff',
+                                'shadow-blur': 10,
+                                'shadow-color': '#333',
+                                'shadow-offset-x': 0,
+                                'shadow-offset-y': 0
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'width': 4,
+                                'line-color': '#888',
+                                'target-arrow-color': '#888',
+                                'target-arrow-shape': 'triangle',
+                                'curve-style': 'bezier'
+                            }
+                        }
+                    ],
+                    layout: {
+                        name: 'circle',
+                        padding: 20
+                    }
+                });
+
+            });
+        }
+
+    </script>
+</body>
+</html>
